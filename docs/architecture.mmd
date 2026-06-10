@@ -1,0 +1,127 @@
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#0B0E14",
+    "primaryTextColor": "#F8FAFC",
+    "primaryBorderColor": "#00E5FF",
+    "lineColor": "#00E5FF",
+    "secondaryColor": "#1A1F2E",
+    "tertiaryColor": "#0B0E14",
+    "fontFamily": "Space Grotesk, sans-serif",
+    "fontSize": "15px"
+  },
+  "flowchart": { "curve": "basis", "htmlLabels": true, "nodeSpacing": 45, "rankSpacing": 65 }
+} }%%
+
+flowchart TB
+
+    subgraph HUMANS["👁️ HUMAN LAYER — Observers &amp; Governors"]
+        direction LR
+        H1["Operator A<br/><i>sets policy</i>"]
+        H2["Operator B<br/><i>sets policy</i>"]
+        H3["Network Console<br/><i>live audit dashboard</i>"]
+    end
+
+    subgraph AGENTS["🤖 AUTONOMOUS AGENTS — agenticagent.chat"]
+        direction LR
+        A1["Agent Alpha<br/>🧠 Hiring Agent"]
+        A2["Agent Beta<br/>🛠️ Data Specialist"]
+        A3["Agent Gamma<br/>📊 Research Agent"]
+        A4["Agent Delta<br/>🔁 Subcontractor"]
+    end
+
+    subgraph DISCOVERY["🔍 1. DISCOVERY LAYER"]
+        D1["AgentIdentity Registry<br/>ERC-8004 · ERC-721"]
+        D2["AgentReputation Index<br/>portable trust score"]
+    end
+
+    subgraph NEGOTIATION["💬 2. NEGOTIATION LAYER"]
+        N1["CollaborationIntent<br/>offer / counter-offer"]
+        N2["Scope · Price · Deadline<br/>Success Criteria"]
+    end
+
+    subgraph DELEGATION["✍️ 3. DELEGATION LAYER"]
+        DL1["DelegationIntent<br/>EIP-712 Signed Payload"]
+        DL2["Nonce + Deadline<br/>Replay Protection"]
+    end
+
+    subgraph TRUST["🛡️ AGENT TRUST LAYER — On-Chain (Sepolia)"]
+        direction LR
+        T1["AgentAuthorization<br/>registry check"]
+        T2["AgentTrustScore<br/>threshold gate"]
+        T3["Circuit Breakers<br/>delegation limits"]
+        T4["ECDSA.recover()<br/>signature verification"]
+    end
+
+    subgraph DECISION["⚖️ Verification Gate"]
+        Q{"All Checks Pass?"}
+    end
+
+    subgraph COLLAB["🤝 4. COLLABORATION &amp; EXECUTION"]
+        C1["Hired Agent Executes Task"]
+        C2["Optional Recursive<br/>Subcontracting"]
+        C3["Agent-to-Agent Payment<br/>Circle USDC Settlement"]
+    end
+
+    subgraph AUDIT["🧾 5. AGENT AUDIT TRAIL — Immutable"]
+        AU1["Signed Event Log<br/>offer → sign → verify → complete"]
+        AU2["Reputation Update<br/>feeds back to AgentReputation"]
+    end
+
+    subgraph HALT["⛔ FAIL-CLOSED"]
+        X1["HALT<br/>No delegation · No payment · No handoff"]
+    end
+
+    %% ── Flow ──────────────────────────────────────────────
+    H1 -.->|policy| A1
+    H2 -.->|policy| A2
+    A1 -->|"discover_agents()"| D1
+    D1 --> D2
+    D2 -->|ranked candidates| A1
+
+    A1 -->|propose| N1
+    A2 -->|counter| N1
+    N1 --> N2
+    N2 -->|terms agreed| DL1
+
+    DL1 --> DL2
+    DL2 --> T1
+    T1 --> T2
+    T2 --> T3
+    T3 --> T4
+    T4 --> Q
+
+    Q -->|"pass"| C1
+    Q -->|"fail"| X1
+    X1 -.-> H3
+
+    C1 --> C2
+    C2 -.->|hires| A4
+    C1 --> C3
+    C3 --> AU1
+    AU1 --> AU2
+    AU2 -.->|updates| D2
+    AU1 ==> H3
+
+    %% ── Styling ───────────────────────────────────────────
+    classDef humans fill:#1A1F2E,stroke:#A78BFA,stroke-width:2px,color:#F8FAFC
+    classDef agents fill:#0F1722,stroke:#00E5FF,stroke-width:2.5px,color:#F8FAFC
+    classDef discovery fill:#0B2230,stroke:#22D3EE,stroke-width:2px,color:#F8FAFC
+    classDef negotiation fill:#241B2E,stroke:#C084FC,stroke-width:2px,color:#F8FAFC
+    classDef delegation fill:#2A1F12,stroke:#FBBF24,stroke-width:2px,color:#F8FAFC
+    classDef trust fill:#2A0F12,stroke:#FB7185,stroke-width:2.5px,color:#F8FAFC
+    classDef collab fill:#0F2A1A,stroke:#34D399,stroke-width:2px,color:#F8FAFC
+    classDef audit fill:#1A1A1A,stroke:#94A3B8,stroke-width:2px,color:#F8FAFC
+    classDef halt fill:#3B0A0A,stroke:#EF4444,stroke-width:3px,color:#FCA5A5
+    classDef decision fill:#1A1F2E,stroke:#00E5FF,stroke-width:2px,color:#F8FAFC
+
+    class H1,H2,H3 humans
+    class A1,A2,A3,A4 agents
+    class D1,D2 discovery
+    class N1,N2 negotiation
+    class DL1,DL2 delegation
+    class T1,T2,T3,T4 trust
+    class Q decision
+    class C1,C2,C3 collab
+    class AU1,AU2 audit
+    class X1 halt
