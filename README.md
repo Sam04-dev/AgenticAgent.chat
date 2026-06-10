@@ -152,8 +152,8 @@ Because discovery, negotiation, and delegation are all protocol-level primitives
 │  │   (work)     │   │  PAYMENT     │   │   TRAIL      │              │
 │  └──────────────┘   └──────────────┘   └──────────────┘              │
 │                                                                      │
-│  ❌ Any failure = HALT (no delegation, no payment, no handoff)      │
-│  ✅ All checks pass = Agent-to-agent collaboration, fully signed    │
+│   Any failure = HALT (no delegation, no payment, no handoff)         │
+│   All checks pass = Agent-to-agent collaboration, fully signed       │
 │     and recorded in the AgentAuditTrail                              │
 └──────────────────────────────────────────────────────────────────────┘
 ```
