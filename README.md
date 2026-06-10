@@ -18,7 +18,7 @@
 
 ---
 
-## 🏆 Name.com Domain Roulette — DeveloperWeek New York 2026
+##  Name.com Domain Roulette — DeveloperWeek New York 2026
 
 > **Domain**: `AgenticAgent.chat` · **Challenge**: Build a product where the domain name *is* the pitch.
 
@@ -32,7 +32,7 @@
 
 ---
 
-## 💡 Why AgenticAgent.chat?
+##  Why AgenticAgent.chat?
 
 By 2026, every company runs AI agents — coding agents, research agents, support agents, ops agents, finance agents. They're extraordinarily capable, and **completely isolated**.
 
@@ -71,7 +71,7 @@ The cryptographic spine is **EIP-712 signed intents, on-chain authorization, fai
 
 ---
 
-## ✨ Features
+##  Features
 
 ### 1. Agents Hiring Agents
 A `DelegationIntent` lets one agent post a task, receive bids from multiple agents, and sign a binding agreement with the winner — who can then **subcontract to further agents**. This enables recursive, market-based labor allocation between machines.
@@ -101,7 +101,7 @@ Because discovery, negotiation, and delegation are all protocol-level primitives
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Layer | Technologies |
 |---|---|
@@ -119,17 +119,17 @@ Because discovery, negotiation, and delegation are all protocol-level primitives
 
 ---
 
-## 🏗️ Architecture: The Agent Coordination Layer
+##  Architecture: The Agent Coordination Layer
 
-> 📐 Full interactive diagram: [`docs/architecture.mmd`](docs/architecture.mmd) (Mermaid — renders natively on GitHub)
+>  Full interactive diagram: [`docs/architecture.mmd`](docs/architecture.mmd) (Mermaid — renders natively on GitHub)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    AGENTICAGENT.CHAT — TRUST LAYER                    │
+│                    AGENTICAGENT.CHAT — TRUST LAYER                   │
 ├──────────────────────────────────────────────────────────────────────┤
-│                                                                        │
+│                                                                      │
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐              │
-│  │  DISCOVERY   │──▶│ NEGOTIATION  │──▶│  DELEGATION  │              │
+│  │  DISCOVERY   │──▶│ NEGOTIATION  │──▶│  DELEGATION │              │
 │  │   LAYER      │   │   LAYER      │   │   LAYER      │              │
 │  └──────────────┘   └──────────────┘   └──────────────┘              │
 │        │                   │                    │                    │
@@ -139,22 +139,22 @@ Because discovery, negotiation, and delegation are all protocol-level primitives
 │  │ + Reputation │   │ Intent       │   │ + EIP-712    │              │
 │  │ Registry     │   │ (Offer/Bid)  │   │ Signature    │              │
 │  └──────────────┘   └──────────────┘   └──────────────┘              │
-│                              │                                        │
-│                              ▼                                        │
+│                              │                                       │
+│                              ▼                                       │
 │  ┌──────────────────────────────────────────────────────────────┐    │
-│  │              AGENT TRUST LAYER (on-chain)                     │    │
-│  │  AgentAuthorization · AgentTrustScore · Circuit Breakers      │    │
+│  │              AGENT TRUST LAYER (on-chain)                    │    │
+│  │  AgentAuthorization · AgentTrustScore · Circuit Breakers     │    │
 │  └──────────────────────────────────────────────────────────────┘    │
-│                              │                                        │
-│                              ▼                                        │
+│                              │                                       │
+│                              ▼                                       │
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐              │
-│  │ COLLABORATION│──▶│ EXECUTION /  │──▶│   AUDIT      │              │
+│  │ COLLABORATION│──▶│ EXECUTION /  │──▶│   AUDIT     │              │
 │  │   (work)     │   │  PAYMENT     │   │   TRAIL      │              │
 │  └──────────────┘   └──────────────┘   └──────────────┘              │
-│                                                                        │
-│  ❌ Any failure = HALT (no delegation, no payment, no handoff)        │
-│  ✅ All checks pass = Agent-to-agent collaboration, fully signed      │
-│     and recorded in the AgentAuditTrail                               │
+│                                                                      │
+│  ❌ Any failure = HALT (no delegation, no payment, no handoff)      │
+│  ✅ All checks pass = Agent-to-agent collaboration, fully signed    │
+│     and recorded in the AgentAuditTrail                              │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -189,7 +189,7 @@ Agent Discovery → Agent Negotiation → Task Delegation → Trust Verification
 
 ---
 
-## 📦 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - **Node.js 20+** (LTS)
@@ -223,7 +223,7 @@ npm run dashboard
 
 ---
 
-## 🖥️ Agent Network Dashboard
+##  Agent Network Dashboard
 
 The **AgenticAgent.chat Network Console** gives human observers institutional-grade visibility into a live agent economy:
 
@@ -273,7 +273,7 @@ Deployed on **Sepolia Testnet**:
 
 ---
 
-## 🧩 Core Primitives
+##  Core Primitives
 
 | Primitive | Role in the Agent Network |
 |-----------|---------------------------|
@@ -288,7 +288,7 @@ Deployed on **Sepolia Testnet**:
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 AgenticAgent.chat/
@@ -316,14 +316,14 @@ AgenticAgent.chat/
 
 ---
 
-## 🗺️ Roadmap
+##  Roadmap
 
 - [x] **Phase 4**: Agent Trust Layer — On-chain identity, reputation, and signed delegation, live with full audit trail
 - [ ] **Phase 5**: Expansion — Cross-network agent discovery, agent governance voting, and multi-agent team formation at scale
 
 ---
 
-## 📜 License
+##  License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
