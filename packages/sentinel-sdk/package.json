@@ -1,0 +1,45 @@
+{
+  "name": "@agenticagentchat/trust-sdk",
+  "version": "1.0.0",
+  "description": "SDK for the AgenticAgent.chat Trust Layer - verifiable agent identity, reputation, and signed task delegation for autonomous agent networks",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "agent-network",
+    "ai",
+    "agent-trust-layer",
+    "agent-identity",
+    "eip-712",
+    "ethereum"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AgenticAgentChat/agenticagent-chat.git",
+    "directory": "packages/sentinel-sdk"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "NODE_OPTIONS='--import tsx' mocha test/**/*.test.ts",
+    "smoke": "NODE_OPTIONS='--import tsx' tsx ./examples/trading_bot.ts"
+  },
+  "dependencies": {
+    "ethers": "^6.10.0",
+    "viem": "^2.47.6"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "chai": "^4.3.4",
+    "mocha": "^10.0.6",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}

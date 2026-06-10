@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# start-app.sh - Safely starts the Vertex Sentinel application and dashboard in the background
+
+# Fail on error
+set -e
+
+# Change to the directory where the script is located
+cd "$(dirname "$0")"
+
+# Best Practice: Ensure we have necessary directories
+mkdir -p logs pids
+
+# Load NVM and use Node 20
+export NVM_DIR="$HOME/.nvm"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    echo "⚙️  Loading NVM..."
+    . "$NVM_DIR/nvm.sh"
+    nvm use 20 || echo "⚠️  nvm use 20 failed, using system node"
+else
+    echo "⚠️  NVM not found at $NVM_DIR/nvm.sh, relying on system Node.js"
+fi
+
+echo "╔═══════════════════════════════════════════════════╗"
+echo "║          AgenticAgent.chat Services               ║"
+echo "╚═══════════════════════════════════════════════════╝"
+
+# Check for .env file
+if [ ! -f .env ]; then
+    echo "❌ ERROR: .env file not found. Please create one from .env.example."
+    exit 1
+fi
+
+start_service() {
+    local SERVICE_NAME=$1
+    local START_COMMAND=$2
+    local PID_FILE="pids/${SERVICE_NAME}.pid"
+    local LOG_FILE="logs/${SERVICE_NAME}.log"
+
+    # Best Practice: Guarantee no double-start
+    if [ -f "$PID_FILE" ]; then
+        local PREV_PID=$(cat "$PID_FILE")
+        if kill -0 "$PREV_PID" 2>/dev/null; then
+            echo "⚠️  $SERVICE_NAME is already running (PID: $PREV_PID). Skipping."
+            return 0
+        else
+            echo "🧹 Cleaning up stale PID file for $SERVICE_NAME."
+            rm "$PID_FILE"
+        fi
+    fi
+
+    echo "🚀 Starting $SERVICE_NAME..."
+    # Execute the command in the background, redirecting stdout and stderr
+    # Using 'nohup' protects against the process dying if the terminal closes
+    nohup $START_COMMAND > "$LOG_FILE" 2>&1 &
+    local NEW_PID=$!
+    
+    # Save the new Process ID
+    echo "$NEW_PID" > "$PID_FILE"
+    echo "✅ $SERVICE_NAME started (PID: $NEW_PID). Logs at $LOG_FILE"
+}
+
+# Start the Unified Agent Server (Trading Logic + API + Dashboard)
+start_service "sentinel" "npm run start"
+
+echo ""
+echo "Vertex Sentinel has been started in the background (Unified Server)."
+echo "Use './stop-app.sh' to gracefully shut it down."
+echo ""
+echo "🔍 How to verify the services are running:"
+echo "  1. Monitor Unified Logs:    tail -f logs/sentinel.log"
+echo "  2. View Dashboard UI:       http://localhost:3006/"
+echo "  3. Check process status:    ps -p \$(cat pids/sentinel.pid)"

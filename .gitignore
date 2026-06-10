@@ -1,0 +1,58 @@
+# ── Secrets ──────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Node ─────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+out/
+
+# ── Hardhat ──────────────────────────────────────────────────
+cache/
+artifacts/
+typechain-types/
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.class
+venv/
+.venv/
+*.egg-info/
+*.egg
+MANIFEST
+
+# ── Rust ─────────────────────────────────────────────────────
+target/
+**/*.rs.bk
+Cargo.lock
+
+# ── Agent & Tooling (never commit) ───────────────────────────
+.agent/
+.gemini/
+.genkit/
+.external_template/
+
+# ── Nested Project Artifacts ─────────────────────────────────
+vertex-sentinel/
+deployments_sepolia.json
+
+# ── IDEs ─────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────────────
+logs/
+pids/
+*.log
+
+# Added by ggshield
+.cache_ggshield

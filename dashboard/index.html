@@ -1,0 +1,781 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Network Console | AgenticAgent.chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/ethers@5.2.0/dist/ethers.umd.min.js" type="application/javascript"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .tab-active {
+            color: var(--cyan) !important;
+            background: rgba(0, 229, 255, 0.05);
+        }
+
+        @keyframes pulse-emerald {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
+        }
+        .animate-pulse-emerald {
+            animation: pulse-emerald 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="mb-12">
+                <img src="/logo.png" alt="Logo" class="w-10 h-10">
+            </div>
+            <nav class="flex flex-col gap-4">
+                <div onclick="switchTab('terminal')" id="side-terminal" class="nav-item active" title="Network Console">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path></svg>
+                </div>
+                <div onclick="switchTab('operations')" id="side-operations" class="nav-item" title="Operations">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                </div>
+                <div onclick="switchTab('hitl')" id="side-hitl" class="nav-item relative" title="HITL">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <span id="hitl-indicator" class="hidden absolute top-2 right-2 w-2 h-2 bg-amber rounded-full animate-pulse"></span>
+                </div>
+                <div onclick="switchTab('audit')" id="side-audit" class="nav-item" title="Audit">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <div onclick="switchTab('esg')" id="side-esg" class="nav-item" title="ESG Trust">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                </div>
+                <div onclick="switchTab('fleet')" id="side-fleet" class="nav-item" title="Agent Fleet">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </div>
+                <div onclick="switchTab('leaderboard')" id="side-leaderboard" class="nav-item" title="Leaderboard">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+        <!-- Header -->
+        <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6 border-b border-white/5 pb-6">
+            <div class="flex items-center gap-4">
+                <img src="/logo.png" alt="AgenticAgent.chat Logo" class="w-14 h-14 object-contain">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight flex items-center gap-3">
+                        Agentic<span class="text-cyan glow-cyan">Agent</span>.chat
+                    </h1>
+                    <div class="flex items-center gap-3 mt-1">
+                        <span id="agent-id-display" class="text-[10px] font-bold uppercase tracking-widest text-cyan/70">Agent #42</span>
+                        <span class="w-1 h-1 rounded-full bg-gray-700"></span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Agent Network Console</span>
+                        <span class="w-1 h-1 rounded-full bg-gray-700"></span>
+                        <span id="network-badge" class="text-[10px] font-bold uppercase tracking-widest text-cyan/70">Sepolia Testnet</span>
+                        <span class="w-1 h-1 rounded-full bg-gray-700"></span>
+                        <div class="flex items-center gap-2">
+                             <span id="status-indicator" class="w-1.5 h-1.5 rounded-full bg-amber animate-pulse-emerald"></span>
+                             <span id="status-text" class="text-[10px] font-bold uppercase tracking-widest text-emerald/80">System Idle</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-8">
+                <button id="theme-toggle" class="glass p-2 hover:border-cyan/50 transition-all active:scale-95 group">
+                    <svg class="w-5 h-5 text-gray-400 group-hover:text-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l.707.707M6.343 6.343l.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"></path></svg>
+                </button>
+                <div class="toggle-container glass px-4 py-2">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">AI Automation</span>
+                    <label class="switch">
+                        <input type="checkbox" id="automation-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <button id="session-report-btn" class="px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 text-[11px] font-bold uppercase tracking-widest rounded-lg border border-purple-500/30 transition-all active:scale-95">
+                    Session Report
+                </button>
+                <button id="connect-wallet" class="px-6 py-2 bg-cyan/10 hover:bg-cyan/20 text-cyan text-[11px] font-bold uppercase tracking-widest rounded-lg border border-cyan/30 transition-all active:scale-95 shadow-[0_0_15px_rgba(0,229,255,0.1)]">
+                    Connect Wallet
+                </button>
+                <div id="wallet-status" class="hidden flex items-center gap-3 glass px-4 py-2 border-white/10">
+                    <span class="w-2 h-2 rounded-full bg-emerald shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mono" id="wallet-address">0x...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div id="content-area" class="relative">
+            <!-- Deep Dive Reasoning Modal -->
+            <div id="reasoning-modal" class="fixed inset-0 bg-obsidian/95 backdrop-blur-2xl hidden z-[60] flex items-center justify-center p-4">
+                <div class="glass max-w-2xl w-full p-8 border-cyan/30 shadow-[0_0_50px_rgba(0,229,255,0.1)]">
+                    <div class="flex justify-between items-start mb-8 border-b border-white/5 pb-6">
+                        <div>
+                            <h2 class="text-2xl font-black italic tracking-tighter text-white">AI REASONING <span class="text-cyan">— DEEP DIVE</span></h2>
+                            <p id="rd-trace-id" class="text-[10px] text-gray-500 mono uppercase mt-1">TRACE: —</p>
+                        </div>
+                        <button id="close-reasoning-modal" class="text-gray-500 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-8">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-white/2 rounded-xl border border-white/5">
+                                <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Market Sentiment</p>
+                                <h4 id="rd-sentiment" class="text-lg font-bold text-cyan">Analyzing...</h4>
+                            </div>
+                            <div class="p-4 bg-white/2 rounded-xl border border-white/5">
+                                <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Risk Assessment</p>
+                                <h4 id="rd-risk" class="text-lg font-bold text-amber">Calculating...</h4>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-cyan"></span> Chain of Thought
+                            </h4>
+                            <div id="rd-cot" class="p-6 bg-slate-900/50 rounded-xl border border-white/5 text-xs text-gray-300 leading-relaxed font-medium italic">
+                                <!-- COT steps injected here -->
+                            </div>
+                        </div>
+
+                        <div class="p-6 bg-cyan/5 rounded-xl border border-cyan/10">
+                            <h4 class="text-[10px] font-bold text-cyan uppercase tracking-widest mb-3">Final Decision Logic</h4>
+                            <p id="rd-decision" class="text-xs text-white font-bold leading-relaxed">
+                                <!-- Decision summary -->
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-white/5 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 bg-cyan/10 text-cyan text-[8px] font-bold rounded uppercase">EIP-712 Signed</span>
+                            <span class="px-2 py-0.5 bg-purple-500/10 text-purple-400 text-[8px] font-bold rounded uppercase">Arc L1 Verified</span>
+                        </div>
+                        <button class="px-4 py-2 bg-white/5 hover:bg-white/10 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all">Download Audit Artifact</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Automation Paused Overlay -->
+            <div id="paused-overlay" class="hidden absolute inset-0 z-40 bg-obsidian/60 backdrop-blur-[2px] flex items-center justify-center pointer-events-none">
+                <div class="glass p-8 border-amber/30 bg-amber/5 text-center space-y-4 animate-in fade-in zoom-in duration-300">
+                    <div class="w-16 h-16 rounded-full bg-amber/10 flex items-center justify-center mx-auto border border-amber/30">
+                        <svg class="w-8 h-8 text-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-amber uppercase tracking-widest">Automation Paused</h3>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest">Manual Override Active • Agent Brain Idle</p>
+                </div>
+            </div>
+
+            <!-- TAB: NETWORK CONSOLE -->
+            <section id="view-terminal" class="space-y-6">
+                <!-- Top Row Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div class="glass p-5 border-cyan/10">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Trust Layer Savings</p>
+                        <div class="flex items-baseline gap-2">
+                            <h3 id="metric-savings" class="text-3xl font-bold text-cyan glow-cyan">$0.00</h3>
+                        </div>
+                        <p class="text-[9px] text-gray-600 mt-2">Blocked Capital Risks</p>
+                    </div>
+                    <div class="glass p-5">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Total PnL / ROI</p>
+                        <div class="flex items-baseline gap-2">
+                            <h3 id="metric-total-pnl" class="text-3xl font-bold">$0.00</h3>
+                            <span id="metric-roi" class="text-xs font-bold text-emerald">0.00%</span>
+                        </div>
+                        <p class="text-[9px] text-gray-600 mt-2">Combined Session Performance</p>
+                    </div>
+                    <div class="glass p-5">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Max Drawdown</p>
+                        <h3 id="metric-mdd" class="text-3xl font-bold text-crimson">0.00%</h3>
+                        <p class="text-[9px] text-gray-600 mt-2">Peak-to-Trough Risk</p>
+                    </div>
+                    <div class="glass p-5">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Win Rate / Ratio</p>
+                        <div class="flex items-baseline gap-2">
+                            <h3 id="metric-winrate" class="text-3xl font-bold">0%</h3>
+                            <span id="metric-winloss" class="text-xs font-bold text-cyan">0.00</span>
+                        </div>
+                        <p class="text-[9px] text-gray-600 mt-2">Strategy Consistency</p>
+                    </div>
+                    <div class="glass p-5">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Sharpe Ratio</p>
+                        <h3 id="metric-sharpe" class="text-3xl font-bold text-amber">0.00</h3>
+                        <p class="text-[9px] text-gray-600 mt-2">Risk-Adjusted Return</p>
+                    </div>
+                </div>
+
+                <!-- Middle Row: Charts & Market Context -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass overflow-hidden h-[500px] flex flex-col">
+                        <div class="p-4 border-b border-white/5 flex justify-between items-center bg-white/2">
+                            <span class="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                                <svg class="w-3 h-3 text-cyan" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
+                                Technical Analysis Terminal
+                            </span>
+                            <div id="chart-pair-badge" class="px-2 py-1 bg-cyan/10 text-cyan text-[10px] font-bold rounded">BTC/USDT</div>
+                        </div>
+                        <div class="flex-grow w-full" id="tradingview-widget">
+                            <!-- TradingView Widget placeholder -->
+                            <div class="w-full h-full bg-slate-900/50 flex items-center justify-center text-gray-600 text-xs italic">
+                                Loading TradingView Engine...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-6">
+                        <!-- Decision Intelligence / Sentiment -->
+                        <div class="glass p-6 flex-grow border-amber/10 h-[320px] flex flex-col">
+                            <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Risk Breakdown Radar</h4>
+                            <div class="flex-grow relative">
+                                <canvas id="risk-radar"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="glass p-6 border-cyan/10 h-[220px]">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Market Momentum</h4>
+                                <div class="flex gap-2">
+                                    <div id="gauge-volatility" class="w-12 h-12 relative">
+                                        <svg viewBox="0 0 100 50" class="w-full h-full">
+                                            <path d="M10 45 A 40 40 0 0 1 90 45" fill="none" stroke="currentColor" stroke-width="8" class="text-white/5" />
+                                            <path id="volatility-gauge-path" d="M10 45 A 40 40 0 0 1 90 45" fill="none" stroke="var(--cyan)" stroke-width="8" stroke-dasharray="125.6" stroke-dashoffset="125.6" class="transition-all duration-1000" />
+                                        </svg>
+                                        <span class="absolute bottom-0 left-0 right-0 text-[7px] text-center font-bold">VOL</span>
+                                    </div>
+                                    <div id="gauge-volume" class="w-12 h-12 relative">
+                                        <svg viewBox="0 0 100 50" class="w-full h-full">
+                                            <path d="M10 45 A 40 40 0 0 1 90 45" fill="none" stroke="currentColor" stroke-width="8" class="text-white/5" />
+                                            <path id="volume-gauge-path" d="M10 45 A 40 40 0 0 1 90 45" fill="none" stroke="var(--amber)" stroke-width="8" stroke-dasharray="125.6" stroke-dashoffset="125.6" class="transition-all duration-1000" />
+                                        </svg>
+                                        <span class="absolute bottom-0 left-0 right-0 text-[7px] text-center font-bold">LIQ</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="volatility-heatmap" class="grid grid-cols-10 gap-1 h-[120px]">
+                                <!-- 100 cells injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Circuit Breaker Status -->
+                        <div class="glass p-6 border-crimson/10">
+                            <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Distance to Circuit Breaker</h4>
+                            <div class="space-y-5">
+                                <div>
+                                    <div class="flex justify-between text-[10px] font-bold uppercase mb-2">
+                                        <span>Position Limit</span>
+                                        <span id="cb-pos-text" class="text-gray-400">$0 / $0</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div id="cb-pos-bar" class="h-full bg-cyan transition-all" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] font-bold uppercase mb-2">
+                                        <span>Hourly Volume</span>
+                                        <span id="cb-vol-text" class="text-gray-400">0 / 0 trades</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div id="cb-vol-bar" class="h-full bg-amber transition-all" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: Recent Agent Logic -->
+                <div class="glass p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Latest Agent Reasoning</h4>
+                        <span class="text-[9px] text-cyan/50 mono uppercase tracking-widest">EIP-712 Signed Audit Stream</span>
+                    </div>
+                    <div id="reasoning-stream" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Cards injected here -->
+                        <div class="text-gray-600 text-xs italic p-4">Awaiting execution reasoning...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: HITL APPROVAL -->
+            <section id="view-hitl" class="hidden space-y-6">
+                <div class="glass p-8">
+                    <h3 class="text-xl font-bold mb-2">High-Stakes Pending Approvals</h3>
+                    <p class="text-xs text-gray-500 uppercase tracking-widest mb-8">Human-in-the-Loop Verification Module</p>
+
+                    <div id="hitl-container" class="space-y-4">
+                        <!-- Pending requests will appear here -->
+                        <div class="text-gray-600 text-xs italic p-12 text-center border border-dashed border-white/5 rounded-xl">
+                            No pending high-stakes trade authorizations...
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: AGENT OPERATIONS -->
+            <section id="view-operations" class="hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Arc L1 Control -->
+                    <div class="lg:col-span-2 glass p-8">
+                        <div class="flex justify-between items-start mb-8">
+                            <div>
+                                <h3 class="text-xl font-bold">Agent Control Dashboard</h3>
+                                <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest">Arc L1 Infrastructure & Risk Tuning</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 bg-emerald/10 text-emerald text-[10px] font-bold rounded border border-emerald/20 uppercase tracking-widest">Arc L1: Connected</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                            <!-- Tuning -->
+                            <div class="space-y-8">
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Max Position Size ($)</label>
+                                        <span id="val-max-pos" class="text-sm font-bold text-cyan mono">$1,000</span>
+                                    </div>
+                                    <input type="range" id="slider-max-pos" min="100" max="10000" step="100" value="1000">
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Trades Per Hour</label>
+                                        <span id="val-max-trades" class="text-sm font-bold text-amber mono">5</span>
+                                    </div>
+                                    <input type="range" id="slider-max-trades" min="1" max="50" step="1" value="5">
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sentiment Weight</label>
+                                        <span id="val-sent-weight" class="text-sm font-bold text-purple-400 mono">0.5</span>
+                                    </div>
+                                    <input type="range" id="slider-sent-weight" min="0" max="1" step="0.1" value="0.5">
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Liquidity Floor ($)</label>
+                                        <span id="val-liq-floor" class="text-sm font-bold text-emerald mono">$10k</span>
+                                    </div>
+                                    <input type="range" id="slider-liq-floor" min="1000" max="100000" step="1000" value="10000">
+                                </div>
+                                <button id="update-risk-btn" class="w-full py-4 bg-cyan/10 hover:bg-cyan/20 text-cyan text-xs font-bold uppercase tracking-widest rounded-lg border border-cyan/30 transition-all active:scale-95">
+                                    Update Risk Parameters
+                                </button>
+                                <div class="flex items-center justify-between p-4 bg-amber/5 border border-amber/20 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-2 h-2 rounded-full bg-amber animate-pulse"></div>
+                                        <span class="text-[10px] font-bold text-amber uppercase tracking-widest">Manual Guardrail Pin</span>
+                                    </div>
+                                    <label class="switch scale-75">
+                                        <input type="checkbox" id="guardrail-pin">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Panic & Operations -->
+                            <div class="space-y-6 flex flex-col justify-center">
+                                <div class="p-6 bg-crimson/5 rounded-xl border border-crimson/20 text-center">
+                                    <h4 class="text-crimson text-sm font-bold uppercase tracking-widest mb-2">Emergency Protocol</h4>
+                                    <p class="text-[10px] text-gray-500 mb-6">De-Risk all assets and halt Agent Brain immediately via on-chain deactivation.</p>
+                                    <button id="panic-btn" class="w-full py-4 bg-crimson hover:bg-red-600 text-white text-xs font-black uppercase tracking-[0.3em] rounded-lg shadow-[0_0_20px_rgba(239,68,68,0.3)] transition-all active:scale-95">
+                                        DE-RISK / HALT
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar: Arc L1 Stats & Hiring -->
+                    <div class="space-y-6">
+                        <div class="glass p-6">
+                            <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Agent Stack Ops</h4>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center border-b border-white/5 pb-3">
+                                    <span class="text-[10px] text-gray-400">ARC Balance</span>
+                                    <span id="arc-balance" class="text-sm font-bold mono">— ARC</span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-white/5 pb-3">
+                                    <span class="text-[10px] text-gray-400">Next Payment</span>
+                                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest" id="arc-next-payment">N/A</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] text-gray-400">Agent Reputation</span>
+                                    <span class="text-[10px] font-bold text-emerald uppercase tracking-widest">High Trust</span>
+                                </div>
+                                <button class="w-full py-3 bg-white/5 hover:bg-white/10 text-xs font-bold uppercase tracking-widest rounded-lg transition-all mt-4">
+                                    Fund Agent Wallet
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="glass p-6 border-cyan/20 bg-gradient-to-br from-cyan/5 to-transparent">
+                            <h4 class="text-[10px] font-bold text-cyan uppercase tracking-widest mb-2">Expansion Port</h4>
+                            <p class="text-[10px] text-gray-500 mb-4 leading-relaxed">Scale your verifiable fleet by hiring new specialized agents on Arc L1.</p>
+                            <button id="hire-agent-btn" class="w-full py-3 bg-cyan text-obsidian text-xs font-bold uppercase tracking-widest rounded-lg shadow-lg hover:scale-[1.02] transition-all">
+                                Hire New Agent
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: ESG TRUST -->
+            <section id="view-esg" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass p-6 border-emerald/20 bg-emerald/5">
+                        <p class="text-[10px] font-bold text-emerald/70 uppercase tracking-widest mb-3">Energy Efficiency</p>
+                        <h3 class="text-3xl font-bold">94.2%</h3>
+                        <p class="text-[9px] text-gray-500 mt-2">Renewable Energy Compute Index</p>
+                    </div>
+                    <div class="glass p-6 border-emerald/20 bg-emerald/5">
+                        <p class="text-[10px] font-bold text-emerald/70 uppercase tracking-widest mb-3">Carbon Offset Proof</p>
+                        <h3 class="text-3xl font-bold">12.4t</h3>
+                        <p class="text-[9px] text-gray-500 mt-2">Verifiable CO2e Neutralized</p>
+                    </div>
+                    <div class="glass p-6 border-emerald/20 bg-emerald/5">
+                        <p class="text-[10px] font-bold text-emerald/70 uppercase tracking-widest mb-3">Social Impact Score</p>
+                        <h3 class="text-3xl font-bold">A+</h3>
+                        <p class="text-[9px] text-gray-500 mt-2">Governance & Inclusion Metrics</p>
+                    </div>
+                </div>
+
+                <div class="glass p-8 border-emerald/10">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h3 class="text-xl font-bold text-emerald">Sustainability Strategy</h3>
+                            <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest">Verifiable ESG Guardrails for Institutional Compliance</p>
+                        </div>
+                        <span class="px-3 py-1 bg-emerald/10 text-emerald text-[10px] font-bold rounded border border-emerald/20 uppercase tracking-widest">ESG Tier: Platinum</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <div class="p-4 bg-white/2 rounded-xl border border-white/5">
+                                <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">ESG Scoring Breakdown</h4>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                                        <span>Environmental</span>
+                                        <span class="text-emerald">92/100</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div class="h-full bg-emerald" style="width: 92%"></div>
+                                    </div>
+                                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                                        <span>Social</span>
+                                        <span class="text-emerald">88/100</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div class="h-full bg-emerald" style="width: 88%"></div>
+                                    </div>
+                                    <div class="flex justify-between text-[10px] font-bold uppercase">
+                                        <span>Governance</span>
+                                        <span class="text-emerald">98/100</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div class="h-full bg-emerald" style="width: 98%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col justify-center gap-4">
+                            <div class="p-6 bg-emerald/5 rounded-xl border border-emerald/20">
+                                <h4 class="text-emerald text-sm font-bold uppercase tracking-widest mb-2">Institutional Proof</h4>
+                                <p class="text-[10px] text-gray-500 mb-6 leading-relaxed">AGENTICAGENT.CHAT automatically generates on-chain attestations of energy consumption and ESG compliance for every trade cycle.</p>
+                                <button class="w-full py-4 bg-emerald/10 hover:bg-emerald/20 text-emerald text-xs font-bold uppercase tracking-widest rounded-lg border border-emerald/30 transition-all">
+                                    Download ESG Audit Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: LEADERBOARD -->
+            <section id="view-leaderboard" class="hidden space-y-6">
+                <div class="glass p-8">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h3 class="text-xl font-bold">Agent Leaderboard</h3>
+                            <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest">On-Chain Reputation & Performance Rankings</p>
+                        </div>
+                        <span class="px-3 py-1 bg-cyan/10 text-cyan text-[10px] font-bold rounded border border-cyan/20 uppercase tracking-widest">Live Updates</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-gray-500 text-[10px] uppercase tracking-[0.2em]">
+                                    <th class="px-8 py-5 font-bold">Rank</th>
+                                    <th class="px-8 py-5 font-bold">Agent ID</th>
+                                    <th class="px-8 py-5 font-bold text-center">Score</th>
+                                    <th class="px-8 py-5 font-bold text-center">Trades</th>
+                                    <th class="px-8 py-5 font-bold text-right">PnL (bps)</th>
+                                    <th class="px-8 py-5 font-bold text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body" class="text-[11px] mono">
+                                <tr>
+                                    <td colspan="6" class="px-8 py-12 text-center text-gray-600 italic">Polling ReputationRegistry...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: AGENT FLEET -->
+            <section id="view-fleet" class="hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    <div class="glass p-5 border-cyan/10">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Active Agents</p>
+                        <h3 id="fleet-active-count" class="text-3xl font-bold text-cyan glow-cyan">1</h3>
+                        <p class="text-[9px] text-gray-600 mt-2">Verifiable Fleet Size</p>
+                    </div>
+                    <div class="glass p-5">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Fleet ROI (24h)</p>
+                        <h3 class="text-3xl font-bold text-emerald">+3.12%</h3>
+                        <p class="text-[9px] text-gray-600 mt-2">Aggregate Performance</p>
+                    </div>
+                    <div class="glass p-5">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">ARC Stake</p>
+                        <h3 class="text-3xl font-bold text-amber">1,250</h3>
+                        <p class="text-[9px] text-gray-600 mt-2">Total L1 Collateral</p>
+                    </div>
+                    <div class="glass p-5">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Resource Usage</p>
+                        <h3 class="text-3xl font-bold">12%</h3>
+                        <p class="text-[9px] text-gray-600 mt-2">Compute Allocation</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 glass p-8">
+                        <div class="flex justify-between items-center mb-8">
+                            <h3 class="text-xl font-bold">Manage Agent Fleet</h3>
+                            <button id="hire-agent-fleet-btn" class="px-4 py-2 bg-cyan text-obsidian text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95">Hire New Agent</button>
+                        </div>
+                        <div class="space-y-4" id="fleet-list">
+                            <!-- Active Agent Item -->
+                            <div class="p-6 bg-white/2 rounded-xl border border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-full bg-cyan/10 border border-cyan/30 flex items-center justify-center">
+                                        <span class="text-cyan font-bold">A1</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-bold">Agent Primary #42</h4>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="px-2 py-0.5 bg-emerald/10 text-emerald text-[8px] font-bold rounded border border-emerald/20 uppercase">Active</span>
+                                            <span class="text-[9px] text-gray-500 mono">0x97b0...ca3</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-8 text-center">
+                                    <div>
+                                        <p class="text-[8px] text-gray-500 uppercase font-bold">Mode</p>
+                                        <p class="text-[10px] font-bold">Aggregator</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[8px] text-gray-500 uppercase font-bold">Uptime</p>
+                                        <p class="text-[10px] font-bold">99.9%</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[8px] text-gray-500 uppercase font-bold">PnL</p>
+                                        <p class="text-[10px] font-bold text-emerald">+$42.10</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all">Config</button>
+                                    <button class="px-3 py-2 bg-crimson/10 hover:bg-crimson/20 text-crimson rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all">Halt</button>
+                                </div>
+                            </div>
+
+                            <div class="p-6 border border-dashed border-white/5 rounded-xl flex items-center justify-center text-gray-600 text-[10px] uppercase font-bold tracking-widest">
+                                Capacity Available for 4 Additional Agents
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass p-8">
+                        <h3 class="text-xl font-bold mb-6">Payroll & ARC</h3>
+                        <div class="space-y-6">
+                            <div class="p-4 bg-amber/5 rounded-xl border border-amber/10">
+                                <div class="flex justify-between items-center mb-4">
+                                    <span class="text-[10px] font-bold text-amber uppercase tracking-widest">ARC Balance</span>
+                                    <button class="text-[10px] text-amber hover:underline uppercase font-bold">Deposit</button>
+                                </div>
+                                <h4 class="text-2xl font-bold text-white mono">1,250.00 <span class="text-amber/50 text-xs">ARC</span></h4>
+                                <p class="text-[9px] text-gray-500 mt-2">Verified on Arc L1</p>
+                            </div>
+
+                            <div class="space-y-4">
+                                <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pending Invoices</h4>
+                                <div class="flex justify-between items-center p-3 bg-white/2 rounded-lg border border-white/5">
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] font-bold">Compute Ops #42</span>
+                                        <span class="text-[8px] text-gray-500 uppercase mt-0.5">Due in 2 days</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-[10px] font-bold mono">42.0 ARC</span>
+                                        <button class="px-2 py-1 bg-cyan/10 text-cyan text-[8px] font-bold uppercase rounded border border-cyan/20">Pay</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button class="w-full py-4 bg-white/5 hover:bg-white/10 text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all border border-white/5">
+                                View Billing History
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: TECHNICAL AUDIT -->
+            <section id="view-audit" class="hidden space-y-6">
+                <div class="glass overflow-hidden">
+                    <div class="p-6 border-b border-white/5 bg-white/2 flex justify-between items-center">
+                        <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Full Verifiable Audit Trail</h4>
+                        <div class="flex gap-4">
+                             <button id="export-btn" class="text-[10px] font-bold text-cyan hover:underline uppercase tracking-widest">Export JSONL</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-gray-500 text-[10px] uppercase tracking-[0.2em]">
+                                    <th class="px-8 py-5 font-bold">Timestamp</th>
+                                    <th class="px-8 py-5 font-bold">Action</th>
+                                    <th class="px-8 py-5 font-bold">Trading Pair</th>
+                                    <th class="px-8 py-5 font-bold text-right">Volume</th>
+                                    <th class="px-8 py-5 font-bold text-center">Arc L1 Proof</th>
+                                    <th class="px-8 py-5 font-bold text-center">Integrity</th>
+                                    <th class="px-8 py-5 font-bold">Justification</th>
+                                </tr>
+                            </thead>
+                            <tbody id="log-body" class="text-[11px] mono">
+                                <!-- Rows injected here -->
+                                <tr>
+                                    <td colspan="7" class="px-8 py-12 text-center text-gray-600 italic">Initializing Audit Engine...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="mt-12 py-8 flex flex-col md:flex-row justify-between items-center border-t border-white/5 gap-4 text-gray-600 text-[10px] font-bold uppercase tracking-[0.3em]">
+            <div class="flex items-center gap-6">
+                <span>AGENTICAGENT.CHAT v1.1.0</span>
+                <span class="w-1 h-1 rounded-full bg-gray-800"></span>
+                <span class="text-cyan/40">Powered by Arc L1 & Genkit AI</span>
+            </div>
+            <span>© 2026 AgenticAgent.chat Agents</span>
+        </footer>
+        </main>
+    </div>
+
+    <!-- Session Report Modal -->
+    <div id="pnl-modal" class="fixed inset-0 bg-obsidian/90 backdrop-blur-xl hidden z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="glass max-w-4xl w-full p-8 border-purple-500/30 shadow-[0_0_50px_rgba(124,58,237,0.15)]">
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h2 class="text-2xl font-black italic tracking-tighter text-white">AGENTICAGENT.CHAT <span class="text-purple-500">— SESSION REPORT</span></h2>
+                    <p id="report-session-id" class="text-[10px] text-gray-500 mono uppercase mt-1">SESSION: —</p>
+                </div>
+                <div id="report-status-banner" class="px-6 py-2 rounded-full font-black uppercase tracking-widest text-xs">
+                    LOADING...
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white/2 p-4 rounded-xl border border-white/5">
+                    <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Realized PnL</p>
+                    <h4 id="report-realized" class="text-xl font-bold mono">—</h4>
+                </div>
+                <div class="bg-white/2 p-4 rounded-xl border border-white/5">
+                    <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Win Rate</p>
+                    <h4 id="report-winrate" class="text-xl font-bold mono">—</h4>
+                </div>
+                <div class="bg-white/2 p-4 rounded-xl border border-white/5">
+                    <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Max Drawdown</p>
+                    <h4 id="report-mdd" class="text-xl font-bold mono text-crimson">—</h4>
+                </div>
+                <div class="bg-white/2 p-4 rounded-xl border border-white/5">
+                    <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Trust Layer Saved</p>
+                    <h4 id="report-savings" class="text-xl font-bold mono text-cyan">—</h4>
+                </div>
+            </div>
+
+            <div class="space-y-4 mb-8 max-h-64 overflow-y-auto pr-2">
+                <table class="w-full text-left text-[10px] uppercase font-bold mono">
+                    <thead class="text-gray-500 border-b border-white/10">
+                        <tr>
+                            <th class="py-2">Time</th>
+                            <th class="py-2">Pair</th>
+                            <th class="py-2">Side</th>
+                            <th class="py-2 text-right">Price</th>
+                            <th class="py-2 text-right">PnL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-trades-body" class="text-gray-400">
+                        <!-- Trades injected here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex gap-4">
+                <button id="close-pnl-modal" class="flex-1 py-4 bg-white/5 hover:bg-white/10 text-xs font-bold uppercase tracking-widest rounded-xl transition-all">Close</button>
+                <button id="export-pnl-btn" class="flex-1 py-4 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-purple-900/20">Export Report (.JSON)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hire Agent Modal (Mock) -->
+    <div id="hire-modal" class="fixed inset-0 bg-obsidian/90 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="glass max-w-lg w-full p-8 border-cyan/30">
+            <h3 class="text-2xl font-bold mb-2">Hire New Agent</h3>
+            <p class="text-xs text-gray-500 uppercase tracking-widest mb-8">Deploy a Specialized Agent to the Network</p>
+
+            <div class="space-y-6">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Select Agent Model</label>
+                    <select class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-cyan transition-all appearance-none">
+                        <option>Guardian (Institutional Conservative)</option>
+                        <option>Scout (Balanced Alpha Search)</option>
+                        <option>Predator (Aggressive Growth)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Initial ARC Allocation</label>
+                    <input type="number" value="100" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-cyan transition-all">
+                </div>
+                <div class="p-4 bg-cyan/5 rounded-lg border border-cyan/10">
+                    <div class="flex justify-between text-[10px] font-bold uppercase mb-1">
+                        <span class="text-gray-400">Estimated Gas</span>
+                        <span class="text-cyan">0.0042 ETH</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-bold uppercase mt-2">
+                        <span class="text-gray-400">Registration Fee</span>
+                        <span class="text-cyan">50 ARC</span>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <button id="close-modal" class="flex-1 py-3 bg-white/5 hover:bg-white/10 text-xs font-bold uppercase tracking-widest rounded-lg transition-all">Cancel</button>
+                    <button id="confirm-hire-btn" class="flex-1 py-3 bg-cyan text-obsidian text-xs font-bold uppercase tracking-widest rounded-lg font-black transition-all active:scale-95">Confirm Hiring</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TradingView Script -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js" defer></script>
+
+    <!-- Main Application Entry -->
+    <script type="module" src="/js/app.js"></script>
+</body>
+</html>
